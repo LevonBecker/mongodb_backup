@@ -26,9 +26,9 @@ If you decide to run it on another server other than the MongoDB server then you
   a. Such as, the user home folder of the user that will run the command.
 2. Set ownership of the script file as needed
 3. Set file as executable
-  ```bash
-  chmod +x mongodb_backup.sh
-  ```
+```bash
+chmod +x mongodb_backup.sh
+```
 
 ## Setup Cron Job
 
@@ -43,8 +43,8 @@ crontab -u mongobackup -e
 
 ## Disclaimer
 
-Use at your own risk. I am not responsible for any negative impacts caused by using this module or following my instructions.
+Use at your own risk. I am not responsible for any negative impacts caused by using this code or following these instructions.
 
 I am sharing this for educational purposes. 
 
-I hope it helps and you enjoy my hard work. :)
+I hope it helps!
