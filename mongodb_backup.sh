@@ -31,7 +31,6 @@ usageMessage="
 AUTHOR:       Levon Becker
 PURPOSE:      Backup MongoDB with Mongodump
 VERSION:      1.0.8
-WIKI:         http://www.bonusbits.com/main/Automation:MongoDB_Backup
 GITHUB:       https://github.com/LevonBecker/mongodb_backup
 SOURCES:      http://docs.mongodb.org/manual/reference/program/mongodump/
 DESCRIPTION:  Backup MongoDB with Mongodump.
