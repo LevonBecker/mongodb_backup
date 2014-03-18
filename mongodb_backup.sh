@@ -3,10 +3,10 @@
 
 #region Default Variables
 
-  default_backup_path=/backups/mongodb
-  default_log_path=/var/logs/mongo_backups
+  default_backup_path=/backups/mongo_backups
+  default_log_path=/var/log/mongo_backups
   default_auth_db=admin
-  default_size_limit_mb=1000
+  default_size_limit_mb=5000
   default_use_auth=true
   default_host=localhost
   default_port=27017
@@ -17,6 +17,8 @@
   datetime=`date +%Y%m%d-%H%M`
   logfile=mongo_backup_$datetime.log
   backupfile=mongo_backup_$datetime.tgz
+  starttime_seconds=$(date +%s)
+  starttime=$(date)
 
 #endregion Default Variables
 
@@ -28,7 +30,7 @@ usageMessage="
 -----------------------------------------------------------------------------------------------------------------------
 AUTHOR:       Levon Becker
 PURPOSE:      Backup MongoDB with Mongodump
-VERSION:      1.0.5
+VERSION:      1.0.8
 WIKI:         http://www.bonusbits.com/main/Automation:MongoDB_Backup
 GITHUB:       https://github.com/LevonBecker/mongodb_backup
 SOURCES:      http://docs.mongodb.org/manual/reference/program/mongodump/
@@ -70,7 +72,7 @@ $0 -a false
 
 #region Arguments
 
-  while getopts "u:d:p:b:l:s:a:v:n:t:h" opts; do
+  while getopts "u:d:p:b:l:s:a:v:n:t:r:h" opts; do
       case $opts in
           u ) username=$OPTARG;;
           d ) auth_db=$OPTARG;;
@@ -82,7 +84,7 @@ $0 -a false
           v ) version=$OPTARG;;
           n ) host=$OPTARG;;
           t ) port=$OPTARG;;
-          r ) port=$OPTARG;;
+          r ) retention_days=$OPTARG;;
           h ) usage; exit 0;;
           * ) usage; exit 1;;
       esac
@@ -301,3 +303,19 @@ $0 -a false
   show_message 'END: Removing Out-of-Date Backups and Logs.'
 
 #endregion Remove Out-of-Date Backups
+
+
+#region Results
+
+  show_message 'BEGIN: Display Results.'
+  echo 'File:       $backup_path/$backupfile' | tee -a $log_path/$logfile
+  backup_size=$(du -h $backup_path/$backupfile | cut -f 1)
+  echo 'Size:       $backup_size' | tee -a $log_path/$logfile
+  endtime=$(date)
+  runtime=$(date -d @$(($(date +%s)-$starttime_seconds)) +"%H:%M:%S")
+  echo 'Starttime:  $starttime' | tee -a $log_path/$logfile
+  echo 'Endtime:    $endtime' | tee -a $log_path/$logfile
+  echo 'Runtime:    $runtime' | tee -a $log_path/$logfile
+  show_message 'END: Display Results.'
+
+#endregion Results
