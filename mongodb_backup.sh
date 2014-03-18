@@ -3,14 +3,15 @@
 
 #region Default Variables
 
-  default_backup_path=/backups/mongodb
-  default_log_path=/var/log/mongo_backups
+  default_backup_path=/cust/backups/default
+  default_log_path=/cust/logs/mongo_backups
   default_auth_db=admin
-  default_size_limit_mb=5000
+  default_size_limit_mb=1000
   default_use_auth=true
   default_host=localhost
   default_port=27017
   default_version=2.4
+  default_retention_days=30
 
   # Get Date and Time
   datetime=`date +%Y%m%d-%H%M`
@@ -27,7 +28,7 @@ usageMessage="
 -----------------------------------------------------------------------------------------------------------------------
 AUTHOR:       Levon Becker
 PURPOSE:      Backup MongoDB with Mongodump
-VERSION:      1.0.4
+VERSION:      1.0.5
 WIKI:         http://www.bonusbits.com/main/Automation:MongoDB_Backup
 GITHUB:       https://github.com/LevonBecker/mongodb_backup
 SOURCES:      http://docs.mongodb.org/manual/reference/program/mongodump/
@@ -49,13 +50,14 @@ Optional:
 -v MongoDB Version (2.2 | 2.4) - Default ($default_version)
 -n Hostname - Default ($default_host)
 -t Port - Default ($default_port)
+-r Retention in Days to save backups - Default ($default_retention_days)
 -----------------------------------------------------------------------------------------------------------------------
 EXAMPLES
 -----------------------------------------------------------------------------------------------------------------------
 $0 -u admin -p password -d admin
 $0 -u admin -p password -d admin -s '10000'
-$0 -u admin -p password -d admin -b '/media/nfsmount/backups/servicename' -s '10000'
-$0 -u admin -p password -d admin -b '/media/nfsmount/backups/servicename' -s '10000' -n 'mongoserver01.domain.com'
+$0 -u admin -p password -d admin -b '/cust/mybackup/folder' -s '5000'
+$0 -u admin -p password -d admin -b '/cust/mybackup/folder' -s '5000' -n 'mongoserver01.domain.com'
 $0 -a false
 
 -----------------------------------------------------------------------------------------------------------------------
@@ -80,6 +82,7 @@ $0 -a false
           v ) version=$OPTARG;;
           n ) host=$OPTARG;;
           t ) port=$OPTARG;;
+          r ) port=$OPTARG;;
           h ) usage; exit 0;;
           * ) usage; exit 1;;
       esac
@@ -93,6 +96,7 @@ $0 -a false
   if [ -z $version ]; then version=$default_version; fi
   if [ -z $host ]; then host=$default_host; fi
   if [ -z $port ]; then port=$default_port; fi
+  if [ -z $retention_days ]; then retention_days=$default_retention_days; fi
 
   if [ $use_auth == true ]
   then  
@@ -147,18 +151,6 @@ $0 -a false
   else
       echo "Backup Path Already Exists ($log_path)"
   fi
-
-  # Increment Error Count
-  # errorcount=$(($errorcount+1))
-
-  # if [ $errorcount -eq 0 ]
-  # then
-  #     echo "Prerequisites satisfied"
-  # else
-  #     echo "Prerequisites not satisfied"
-  #     echo "Aborting"
-  #     exit 1
-  # fi
 
 #endregion Prerequisites
 
@@ -260,14 +252,14 @@ $0 -a false
   # If Backup Success
   if [ -f  $backup_path/$backupfile ]
   then
-    backupcount=$(find $backup_path -mtime +1 -type f -exec ls -f {} \; | wc -l)
+    backupcount=$(find $backup_path -mtime +$retention_days -type f -exec ls -f {} \; | wc -l)
     if [ $backupcount -gt 0 ]
     then
-      backupfiles=$(find $backup_path -mtime +1 -type f -exec ls -f {} \;)
+      backupfiles=$(find $backup_path -mtime +$retention_days -type f -exec ls -f {} \;)
       echo "REPORT: Found ($backupcount) out-of-date files to delete" | tee -a $log_path/$logfile
       # Remove Old Backups
       echo "ACTION: Attempting to Remove the Following Backup Files: $backupfiles" | tee -a $log_path/$logfile
-      find $backup_path -mtime +1 -type f -exec rm -vf {} \;
+      find $backup_path -mtime +$retention_days -type f -exec rm -vf {} \;
       # Determine Success
       if [ $? -eq 0 ]
       then
@@ -278,14 +270,14 @@ $0 -a false
         exit 1
       fi
       # Remove Log Files
-      logcount=$(find $log_path -mtime +1 -type f -exec ls -f {} \; | wc -l)
+      logcount=$(find $log_path -mtime +$retention_days -type f -exec ls -f {} \; | wc -l)
       if [ $logcount -gt 0 ]
       then
-        logfiles=$(find $log_path -mtime +1 -type f -exec ls -f {} \;)
+        logfiles=$(find $log_path -mtime +$retention_days -type f -exec ls -f {} \;)
         echo "REPORT: Found ($logcount) out-of-date backup log files to delete" | tee -a $log_path/$logfile
         # Delete Log Files
         echo "ACTION: Attempting to Remove the Following Log Files: $logfiles" | tee -a $log_path/$logfile
-        find $log_path -mtime +1 -type f -exec rm -vf {} \;
+        find $log_path -mtime +$retention_days -type f -exec rm -vf {} \;
         # Determine Success
         if [ $? -eq 0 ]
         then
