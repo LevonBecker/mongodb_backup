@@ -3,8 +3,8 @@
 
 #region Default Variables
 
-  default_backup_path=/cust/backups/default
-  default_log_path=/cust/logs/mongo_backups
+  default_backup_path=/backups/mongodb
+  default_log_path=/var/logs/mongo_backups
   default_auth_db=admin
   default_size_limit_mb=1000
   default_use_auth=true
