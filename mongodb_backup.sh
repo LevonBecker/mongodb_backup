@@ -1,8 +1,9 @@
 #!/bin/bash
 
 
-#region Default Variables
+#region Variables
 
+  # Defaults
   default_backup_path=/backups/mongo_backups
   default_log_path=/var/log/mongo_backups
   default_auth_db=admin
@@ -20,7 +21,10 @@
   starttime_seconds=$(date +%s)
   starttime=$(date)
 
-#endregion Default Variables
+  # Others
+  script_version=1.0.9
+
+#endregion Variables
 
 
 #region Help
@@ -30,9 +34,8 @@ usageMessage="
 -----------------------------------------------------------------------------------------------------------------------
 AUTHOR:       Levon Becker
 PURPOSE:      Backup MongoDB with Mongodump
-VERSION:      1.0.8
+VERSION:      $script_version
 GITHUB:       https://github.com/LevonBecker/mongodb_backup
-SOURCES:      http://docs.mongodb.org/manual/reference/program/mongodump/
 DESCRIPTION:  Backup MongoDB with Mongodump.
 -----------------------------------------------------------------------------------------------------------------------
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -208,7 +211,11 @@ $0 -a false
 #region Backup
 
   show_message 'BEGIN: Attempting Backup'
+  backupstarttime_seconds=$(date +%s)
+  backupstarttime=$(date)
   mongodump --host $host --port $port $auth_command --out $backup_path/$datetime | tee -a $log_path/$logfile
+  backupendtime=$(date)
+  backupruntime=$(date -d @$(($(date +%s)-$backupstarttime_seconds)) +"%H:%M:%S")
   show_message 'END: Attempting Backup.'
 
 #endregion Backup
@@ -216,10 +223,14 @@ $0 -a false
 
 #region Compress
 
+  compstarttime_seconds=$(date +%s)
+  compstarttime=$(date)
   if [ -d  $backup_path/$datetime ]
   then
     show_message 'BEGIN: Attempting Compression.'
     tar -czvf $backup_path/$backupfile $backup_path/$datetime | tee -a $log_path/$logfile
+    compendtime=$(date)
+    compruntime=$(date -d @$(($(date +%s)-$compstarttime_seconds)) +"%H:%M:%S")
     show_message 'END: Attempting Compression.'
   else
     echo 'ERROR: Failed to Compress Mongo Backup because could not find backup destination directory path.' | tee -a $log_path/$logfile
@@ -307,14 +318,24 @@ $0 -a false
 #region Results
 
   show_message 'BEGIN: Display Results.'
-  echo 'File:       $backup_path/$backupfile' | tee -a $log_path/$logfile
+  echo "Script Version:      $script_version"
+  echo '' | tee -a $log_path/$logfile
+  echo "Backup Starttime:    $backupstarttime" | tee -a $log_path/$logfile
+  echo "Backup Endtime:      $backupendtime" | tee -a $log_path/$logfile
+  echo "Backup Runtime:      $backupruntime" | tee -a $log_path/$logfile
+  echo '' | tee -a $log_path/$logfile
+  echo "Compress Starttime:  $startcomptime" | tee -a $log_path/$logfile
+  echo "Compress Endtime:    $compendtime" | tee -a $log_path/$logfile
+  echo "Compress Runtime:    $compruntime" | tee -a $log_path/$logfile
+  echo '' | tee -a $log_path/$logfile
+  echo "Backup File:         $backup_path/$backupfile" | tee -a $log_path/$logfile
   backup_size=$(du -h $backup_path/$backupfile | cut -f 1)
-  echo 'Size:       $backup_size' | tee -a $log_path/$logfile
+  echo "Backup File Size:    $backup_size" | tee -a $log_path/$logfile
+  echo "Starttime:           $starttime" | tee -a $log_path/$logfile
   endtime=$(date)
+  echo "Endtime:             $endtime" | tee -a $log_path/$logfile
   runtime=$(date -d @$(($(date +%s)-$starttime_seconds)) +"%H:%M:%S")
-  echo 'Starttime:  $starttime' | tee -a $log_path/$logfile
-  echo 'Endtime:    $endtime' | tee -a $log_path/$logfile
-  echo 'Runtime:    $runtime' | tee -a $log_path/$logfile
+  echo "Runtime:             $runtime" | tee -a $log_path/$logfile
   show_message 'END: Display Results.'
 
 #endregion Results
